@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commute Tracker BD - Daily Commute Tracker for Bangladesh</title>
+<meta name="description" content="Offline bilingual EN/Bangla daily commute tracker for Bangladeshi commuters. Routes, trip log, dashboard, 7-day chart, history filters, JSON export/import. No account, no network.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1 id="app-title">Commute Tracker BD</h1>
+    <p id="app-tagline">Daily commute tracker for Bangladesh</p>
+  </div>
+  <button id="lang-toggle" type="button" aria-label="Switch language">BN</button>
+</header>
+<nav class="tabs" aria-label="Sections">
+  <button type="button" data-tab-btn="dashboard" class="active">Dashboard</button>
+  <button type="button" data-tab-btn="routes">Routes</button>
+  <button type="button" data-tab-btn="trips">Trips</button>
+  <button type="button" data-tab-btn="history">History</button>
+  <button type="button" data-tab-btn="data">Data</button>
+</nav>
+<main>
+  <!-- DASHBOARD -->
+  <section id="tab-dashboard" class="panel active">
+    <h2 id="dash-title">Dashboard</h2>
+    <p id="dash-empty" class="notice" style="display:none"></p>
+    <div class="stats">
+      <div class="stat"><span class="stat-label" id="lbl-stat-trips">Total trips</span><strong id="stat-trips">0</strong></div>
+      <div class="stat"><span class="stat-label" id="lbl-stat-cost">Total cost</span><strong id="stat-cost">0</strong></div>
+      <div class="stat"><span class="stat-label" id="lbl-stat-time">Total time</span><strong id="stat-time">0m</strong></div>
+      <div class="stat"><span class="stat-label" id="lbl-stat-avg">Avg duration</span><strong id="stat-avg">0 min</strong></div>
+      <div class="stat"><span class="stat-label" id="lbl-stat-week-trips">This week trips</span><strong id="stat-week-trips">0</strong></div>
+      <div class="stat"><span class="stat-label" id="lbl-stat-week-cost">This week cost</span><strong id="stat-week-cost">0</strong></div>
+    </div>
+    <h3 id="lbl-chart-title">Last 7 days: trips per day</h3>
+    <div id="chart"></div>
+    <p id="chart-empty" class="notice" style="display:none"></p>
+    <h3 id="lbl-route-stats">Per-route stats</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th id="th-rs-route">Route</th><th id="th-rs-trips">Trips</th><th id="th-rs-avg">Avg duration</th><th id="th-rs-fast">Fastest</th><th id="th-rs-slow">Slowest</th><th id="th-rs-total">Total cost</th><th id="th-rs-avgcost">Avg cost / trip</th></tr></thead>
+      <tbody id="route-stats-body"></tbody>
+    </table></div>
+    <h3 id="lbl-mode-stats">Per-mode breakdown</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th id="th-ms-mode">Mode</th><th id="th-ms-trips">Trips</th><th id="th-ms-avg">Avg duration</th><th id="th-ms-total">Total cost</th></tr></thead>
+      <tbody id="mode-stats-body"></tbody>
+    </table></div>
+  </section>
+
+  <!-- ROUTES -->
+  <section id="tab-routes" class="panel">
+    <h2 id="routes-title">Routes</h2>
+    <div id="route-list"></div>
+    <form id="route-form" novalidate>
+      <label><span id="lbl-route-name">Route name</span> <input id="route-name" type="text" maxlength="60" required autocomplete="off"></label>
+      <label><span id="lbl-route-from">From</span> <input id="route-from" type="text" maxlength="60" autocomplete="off"></label>
+      <label><span id="lbl-route-to">To</span> <input id="route-to" type="text" maxlength="60" autocomplete="off"></label>
+      <label><span id="lbl-default-mode">Default mode</span> <select id="route-mode"></select></label>
+      <label><span id="lbl-distance">Distance (km, optional)</span> <input id="route-distance" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 8.5"></label>
+      <p id="route-error" class="error" role="alert"></p>
+      <button id="route-submit" type="submit">Add Route</button>
+      <button id="route-cancel" type="button" style="display:none">Cancel</button>
+    </form>
+  </section>
+
+  <!-- TRIPS -->
+  <section id="tab-trips" class="panel">
+    <h2 id="trips-title">Log a Trip</h2>
+    <p id="trip-empty-state" class="notice" style="display:none"></p>
+    <form id="trip-form" novalidate>
+      <label><span id="lbl-trip-date">Date</span> <input id="trip-date" type="date" required></label>
+      <label><span id="lbl-trip-route">Route</span> <select id="trip-route" required></select></label>
+      <label><span id="lbl-trip-mode">Mode</span> <select id="trip-mode" required></select></label>
+      <label><span id="lbl-duration">Duration (minutes)</span> <input id="trip-duration" type="number" min="1" max="600" step="1" required inputmode="numeric"></label>
+      <label><span id="lbl-cost">Cost (BDT)</span> <input id="trip-cost" type="text" inputmode="decimal" required placeholder="e.g. 50.25"></label>
+      <label><span id="lbl-traffic">Traffic (1-5, optional)</span> <select id="trip-traffic"><option value=""></option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+      <label><span id="lbl-note">Note (optional)</span> <input id="trip-note" type="text" maxlength="200" autocomplete="off"></label>
+      <p id="trip-error" class="error" role="alert"></p>
+      <button id="trip-submit" type="submit">Add Trip</button>
+    </form>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="tab-history" class="panel">
+    <h2 id="history-title">History</h2>
+    <div class="filters">
+      <label><span id="lbl-filter-route">Route</span> <select id="filter-route"></select></label>
+      <label><span id="lbl-filter-mode">Mode</span> <select id="filter-mode"></select></label>
+      <label><span id="lbl-filter-from">From date</span> <input id="filter-from" type="date"></label>
+      <label><span id="lbl-filter-to">To date</span> <input id="filter-to" type="date"></label>
+      <button id="filter-btn" type="button">Filter</button>
+      <button id="filter-clear" type="button">Clear filters</button>
+    </div>
+    <p id="filter-error" class="error" role="alert"></p>
+    <p><span id="history-count">0 trip(s)</span></p>
+    <div class="table-wrap"><table>
+      <thead><tr><th id="th-h-date">Date</th><th id="th-h-route">Route</th><th id="th-h-mode">Mode</th><th id="th-h-dur">Duration</th><th id="th-h-cost">Cost</th><th id="th-h-traffic">Traffic</th><th id="th-h-note">Note</th><th id="th-h-actions">Actions</th></tr></thead>
+      <tbody id="history-body"></tbody>
+    </table></div>
+    <h3 id="lbl-clear-all-title">Erase all data</h3>
+    <p id="lbl-clear-all-hint">Type DELETE below to erase all routes and trips. This cannot be undone.</p>
+    <label><span id="lbl-clear-all-input">Type DELETE</span> <input id="clear-all-input" type="text" autocomplete="off"></label>
+    <p id="clear-all-error" class="error" role="alert"></p>
+    <button id="clear-all-btn" type="button">Erase Everything</button>
+  </section>
+
+  <!-- DATA -->
+  <section id="tab-data" class="panel">
+    <h2 id="data-title">Data</h2>
+    <p id="lbl-export-hint">Export downloads a JSON file and also shows it below.</p>
+    <button id="export-btn" type="button">Export JSON</button>
+    <label for="export-text">Exported JSON</label>
+    <textarea id="export-text" rows="6" readonly></textarea>
+    <p id="lbl-import-hint">Paste a commute-tracker-bd export below, or choose a file.</p>
+    <label><span id="lbl-import-file">Choose export file</span> <input id="import-file" type="file" accept=".json,application/json"></label>
+    <label for="import-text">Import JSON</label>
+    <textarea id="import-text" rows="6" placeholder="Paste export JSON here"></textarea>
+    <p id="import-error" class="error" role="alert"></p>
+    <p id="import-success" class="success" role="status"></p>
+    <button id="import-btn" type="button">Import JSON</button>
+  </section>
+</main>
+<footer><p id="footer-text">Personal tracker, not a transport authority. Costs and durations are user-entered.</p></footer>
+<script src="js/logic.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
